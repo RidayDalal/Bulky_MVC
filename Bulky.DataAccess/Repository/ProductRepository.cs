@@ -5,7 +5,6 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Bulky.DataAccess.Data;
-using Bulky.DataAccess.Migrations;
 using Bulky.DataAccess.Repository.IRepository;
 using Bulky.Models;
 

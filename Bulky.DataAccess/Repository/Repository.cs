@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Bulky.DataAccess.Data;
 using Bulky.DataAccess.Repository.IRepository;
 using Microsoft.EntityFrameworkCore;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Bulky.DataAccess.Repository
 {
@@ -29,9 +30,19 @@ namespace Bulky.DataAccess.Repository
             dbSet.Add(entity);
         }
 
-        public T Get(Expression<Func<T, bool>> filter, string? includeProperties = null)
+        public T Get(Expression<Func<T, bool>> filter, string? includeProperties = null, bool tracked = false)
         {
-            IQueryable<T> query = dbSet;
+            IQueryable<T> query;
+            if (tracked)
+            {
+                query = dbSet;
+            }
+            else
+            {
+                // This is basically running the program as if tracked = true.
+                query = dbSet.AsNoTracking();
+            }
+
             query = query.Where(filter);
             // If the query string is not NULL, then we split the incoming key-value 
             // pair into an array of two different strings.
@@ -47,9 +58,13 @@ namespace Bulky.DataAccess.Repository
         }
 
         // Category, CoverType.
-        public IEnumerable<T> GetAll(string? includeProperties = null)
+        public IEnumerable<T> GetAll(Expression<Func<T, bool>>? filter = null, string? includeProperties = null)
         {
             IQueryable<T> query = dbSet;
+            if (filter != null) 
+            { 
+                query = query.Where(filter); 
+            }
             // If the query string is not NULL, then we split the incoming key-value 
             // pair into an array of two different strings.
             if (!string.IsNullOrEmpty(includeProperties))

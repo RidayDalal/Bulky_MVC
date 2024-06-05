@@ -1,13 +1,14 @@
-using System.Diagnostics;
-using Bulky.DataAccess.Repository;
 using Bulky.DataAccess.Repository.IRepository;
 using Bulky.Models;
+using Bulky.Utility;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
+using System.Security.Claims;
 
-namespace BulkyWeb.Areas.Customer.Controllers
+namespace BulkyBookWeb.Areas.Customer.Controllers
 {
-    // Indicates which area this controller is part of. The HomeController is a part of the 
-    // Customer area as it contains all functions for Customers.
     [Area("Customer")]
     public class HomeController : Controller
     {
@@ -26,13 +27,61 @@ namespace BulkyWeb.Areas.Customer.Controllers
             return View(productList);
         }
 
-		public IActionResult Details(int? id)
-		{
-			Product product = _unitOfWork.Product.Get(u => u.Id == id, includeProperties: "Category");
-			return View(product);
-		}
+        public IActionResult Details(int productId)
+        {
+            ShoppingCart cart = new()
+            {
+                Product = _unitOfWork.Product.Get(u => u.Id == productId, includeProperties: "Category"),
+                Count = 1,
+                ProductId = productId
+            };
+            return View(cart);
+        }
 
-		public IActionResult Privacy()
+        [HttpPost]
+        [Authorize]
+        public IActionResult Details(ShoppingCart shoppingCart)
+        {
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
+            var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
+            shoppingCart.ApplicationUserId = userId;
+
+            ShoppingCart cartFromDb = _unitOfWork.ShoppingCart.Get(u => u.ApplicationUserId == userId &&
+            u.ProductId == shoppingCart.ProductId);
+            // shopping cart exists.
+            if (cartFromDb != null)
+            {
+                // Here, the count of cartFromDb is updated. Since we have obtained the record
+                // from the database, EF Core makes sure any change made on it is 
+                // automatically updated directly in the database. So, after the execution of 
+                // the line below, the record is auomatically updated in the database, and thus we 
+                // don't technically need the update method run in the next line. However, we have 
+                // manually turned off this feature as of now by setting tracked = false in Get().
+                cartFromDb.Count += shoppingCart.Count;
+                _unitOfWork.ShoppingCart.Update(cartFromDb);
+                _unitOfWork.Save();
+
+            } else
+            {
+                // Add a record of the items in the cart.
+                _unitOfWork.ShoppingCart.Add(shoppingCart);
+                _unitOfWork.Save();
+                // Updates this information in the session of the shopping cart. 
+                // Also, it is crucial to understand that here, we are trying to 
+                // obtain just the total distinct items that are there in the entire
+                // shopping cart. So, we getall() and then try to find the distinct 
+                // elements using Count(), and not total number of elements using Count.
+                /*HttpContext.Session.SetInt32(SD.SessionCart, 
+                    _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == userId).Count());*/
+            }
+            // Toastr notification.
+            TempData["success"] = "Added to cart successfully";
+            
+
+            return RedirectToAction("Index");
+        }
+
+        public IActionResult Privacy()
         {
             return View();
         }

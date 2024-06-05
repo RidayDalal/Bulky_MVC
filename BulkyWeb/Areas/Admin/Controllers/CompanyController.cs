@@ -16,7 +16,7 @@ namespace BulkyWeb.Areas.Admin.Controllers
     // This will enable authorization of the role of the person, i.e., a person will only 
     // be able to access this webpage if they are of role ADMIN. This applies it globally
     // on the entire Category Controller.
-    //[Authorize(Roles = SD.Role_Admin)]
+    [Authorize(Roles = SD.Role_Admin)]
     public class CompanyController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;

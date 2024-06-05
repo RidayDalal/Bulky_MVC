@@ -10,17 +10,17 @@ using Bulky.Models;
 
 namespace Bulky.DataAccess.Repository
 {
-    public class CompanyRepository : Repository<Company>, ICompanyRepository
+    public class OrderDetailReopsitory : Repository<OrderDetail>, IOrderDetailRepository
     {
         private ApplicationDbContext _db;
-        public CompanyRepository(ApplicationDbContext db) : base(db)
+        public OrderDetailReopsitory(ApplicationDbContext db) : base(db)
         {
             _db = db;
         }
 
-        public void Update(Company obj)
+        public void Update(OrderDetail obj)
         {
-            _db.Companies.Update(obj);
+            _db.OrderDetails.Update(obj);
         }
     }
 }

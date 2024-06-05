@@ -12,12 +12,14 @@ namespace Bulky.DataAccess.Repository.IRepository
         // T - Category
 
         // Get all the categories.
-        IEnumerable<T> GetAll(string? includeProperties = null);
+        IEnumerable<T> GetAll(Expression<Func<T, bool>>? filter = null, string? includeProperties = null);
 
         // Retrieve a single category record. Here, we would be using the FirstOrDefault() method which takes 
         // a LINQ operation as input. So, we are passing Expression<Func<T, bool>> as datatype.
         // Here, input to LINQ function is some datatype, but output is always a boolean.
-        T Get(Expression<Func<T, bool>> filter, string? includeProperties = null);
+        // Also, tracked = false is set so that no data extracted from the database is immediately updated
+        // in the database while being used in the code.
+        T Get(Expression<Func<T, bool>> filter, string? includeProperties = null, bool tracked = false);
 
         // Create a category
         void Add(T entity);
